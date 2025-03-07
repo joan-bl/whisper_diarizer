@@ -1,9 +1,0 @@
-git+https://github.com/openai/whisper.git@main
-speechbrain
-torch
-torchvision
-torchaudio
-numpy
-ffmpeg
-pyannote-audio @ git+https://github.com/pyannote/pyannote-audio.git
-scikit-learn
