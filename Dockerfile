@@ -1,7 +1,12 @@
-# Usa una imagen base con Python y CUDA para acelerar procesamiento
+# Use CUDA-enabled base image with Python
 FROM nvidia/cuda:12.1.1-cudnn8-devel-ubuntu22.04
 
-# Instalar dependencias del sistema
+# Set environment variables to prevent Python from writing bytecode and buffering stdout
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    DEBIAN_FRONTEND=noninteractive
+
+# Install system dependencies
 RUN apt-get update && apt-get install -y \
     ffmpeg \
     git \
@@ -9,17 +14,22 @@ RUN apt-get update && apt-get install -y \
     python3-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Establecer directorio de trabajo
+# Set working directory
 WORKDIR /app
 
-# Copiar archivos del proyecto a la imagen
+# Copy project files
 COPY . /app
 
-# Instalar dependencias de Python
-RUN pip install --no-cache-dir -r requirements.txt
+# Install Python dependencies
+RUN pip install --no-cache-dir \
+    -r requirements.txt \
+    git+https://github.com/openai/whisper.git@main
 
-# Exponer puerto si necesitas servir la aplicación (ejemplo Flask)
-# EXPOSE 5000
+# Verify Whisper installation
+RUN python3 -c "import whisper; print('Whisper version:', whisper.__version__)"
 
-# Comando de ejecución (ajústalo si es necesario)
-CMD ["python3", "app.py"]
+# Create input and output directories
+RUN mkdir -p /app/input /app/output
+
+# Default command to run the container
+CMD ["python3", "whisper_diarizer_container.py"]
