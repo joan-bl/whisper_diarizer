@@ -1,0 +1,22 @@
+Imagen Docker: whisper_diarizer:latest con tamaño de 16GB
+Sistema: Linux/amd64
+Punto de entrada: /opt/nvidia/nvidia_entrypoint.sh
+Comando por defecto: python3 app.py
+Soporte GPU: La imagen tiene soporte para CUDA 12.1.1
+Python: Versión 3.10.12
+Dependencias clave:
+
+torch 2.6.0
+pyannote.audio 3.3.2
+ffmpeg 1.4
+
+
+Archivos en la imagen:
+
+/app/Dockerfile
+/app/requirements.txt
+/app/whisper_diarizer.py
+
+
+
+Ahora que sabemos exactamente lo que contiene tu imagen, podemos proceder con la actualización. La buena noticia es que tu imagen ya tiene todas las dependencias necesarias instaladas y parece estar correctamente configurada con soporte para GPU.

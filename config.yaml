@@ -1,0 +1,24 @@
+# Configuración para Whisper Diarizer
+# Modelo de Whisper a utilizar (tiny, base, small, medium, large, large-v2)
+model_size: "large-v2"
+
+# Idioma del audio (es para español, en para inglés, auto o any para detección automática)
+language: "es"
+
+# Número de hablantes (0 o null para estimación automática)
+num_speakers: null 
+
+# Carpetas de entrada/salida
+input_folder: "/app/input"
+output_folder: "/app/output"
+
+# Configuración avanzada
+threshold: 0.5  # Umbral para la detección de hablantes
+min_speakers: 2  # Número mínimo de hablantes si se hace estimación automática
+max_speakers: 10  # Número máximo de hablantes si se hace estimación automática
+
+# Formatos de salida
+output_formats:
+  - txt
+  - json
+  - srt

@@ -1,0 +1,36 @@
+FROM pytorch/pytorch:2.0.0-cuda11.7-cudnn8-runtime
+
+# Instalar dependencias del sistema
+RUN apt-get update && apt-get install -y \
+    python3-pip \
+    ffmpeg \
+    libsndfile1 \
+    git \
+    wget \
+    libgl1-mesa-glx \
+    && rm -rf /var/lib/apt/lists/*
+
+# Directorio de trabajo
+WORKDIR /app
+
+# Copiar requirements
+COPY requirements.txt /app/
+
+# Instalar dependencias de Python
+RUN pip3 install --no-cache-dir -r requirements.txt
+
+# Instalar Whisper
+RUN pip3 install --no-cache-dir git+https://github.com/openai/whisper.git
+
+# Crear directorios para entrada y salida
+RUN mkdir -p /app/input /app/output
+
+# Copiar scripts al contenedor
+COPY *.py /app/
+COPY config.yaml /app/
+
+# Puerto para posible API web
+EXPOSE 8000
+
+# Comando por defecto cuando se inicia el contenedor
+CMD ["python3", "main.py"]
