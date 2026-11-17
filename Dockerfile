@@ -21,9 +21,7 @@ WORKDIR /app
 COPY . /app
 
 # Install Python dependencies
-RUN pip install --no-cache-dir \
-    -r requirements.txt \
-    git+https://github.com/openai/whisper.git@main
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Verify Whisper installation
 RUN python3 -c "import whisper; print('Whisper version:', whisper.__version__)"
@@ -31,5 +29,6 @@ RUN python3 -c "import whisper; print('Whisper version:', whisper.__version__)"
 # Create input and output directories
 RUN mkdir -p /app/input /app/output
 
-# Default command to run the container
-CMD ["python3", "whisper_diarizer_container.py"]
+# ENTRYPOINT (no CMD) para que los argumentos de "docker run ... --input x" lleguen al script.
+# Sin argumentos, procesa /app/input y guarda en /app/output (ver config.yaml).
+ENTRYPOINT ["python3", "whisper_diarizer_container.py"]

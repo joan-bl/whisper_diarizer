@@ -1,191 +1,88 @@
 # Whisper Diarizer en Docker
 
-Este proyecto permite realizar transcripción de audio y diarización de hablantes (identificación de quién habla en cada momento) utilizando OpenAI Whisper y PyAnnote en un contenedor Docker con soporte para GPU.
+Transcribe audio con [OpenAI Whisper](https://github.com/openai/whisper) e identifica **quién habla en cada fragmento** (diarización). Funciona en un contenedor Docker con GPU NVIDIA.
 
-## Funcionalidades
+## Cómo funciona
 
-- Transcripción de audio con OpenAI Whisper
-- Diarización de hablantes con PyAnnote
-- Procesamiento acelerado por GPU
-- Soporte para múltiples formatos de audio (.wav, .mp3, .flac, .ogg, .m4a)
-- Salida en varios formatos (texto, SRT, JSON)
-- Configuración flexible
+1. Si el audio no es WAV, se convierte a WAV mono de 16 kHz con ffmpeg.
+2. Whisper transcribe el audio en segmentos.
+3. Para cada segmento se calcula una "huella de voz" con el modelo `speechbrain/spkrec-ecapa-voxceleb`, cargado desde pyannote.audio. No necesita token de Hugging Face.
+4. Los segmentos se agrupan por hablante con clustering aglomerativo. Si no indicas cuántos hablantes hay, se estima uno por cada minuto de audio, entre `min_speakers` y `max_speakers`. Esta estimación es muy aproximada: **si sabes cuántos hablantes hay, indícalo** con `-n`.
+5. Se guardan tres archivos por audio: `_transcript.txt` (agrupado por hablante), `.json` y `.srt` (subtítulos).
 
-## Requisitos previos
+Formatos admitidos: `.wav`, `.mp3`, `.flac`, `.ogg` y `.m4a`.
 
-- Docker instalado en el sistema anfitrión
-- Controladores NVIDIA y NVIDIA Container Toolkit para soporte de GPU
-- Tarjeta gráfica compatible con CUDA
+## Requisitos
 
-## Estructura del proyecto
+- Docker.
+- Una GPU NVIDIA con sus controladores y el [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html). También funciona sin GPU, pero mucho más lento.
 
-```
-.
-├── Dockerfile              # Configuración para construir la imagen Docker
-├── requirements.txt        # Dependencias de Python
-├── whisper_diarizer.py     # Script original de Colab
-├── whisper_diarizer_container.py  # Script adaptado para contenedor
-├── config.yaml             # Configuración del sistema
-└── run_docker.sh           # Script para facilitar la ejecución del contenedor
-```
-
-## Instalación
-
-1. Clona este repositorio:
-   ```bash
-   git clone https://github.com/tuusuario/whisper-diarizer-docker.git
-   cd whisper-diarizer-docker
-   ```
-
-2. Otorga permisos de ejecución al script de ayuda:
-   ```bash
-   chmod +x run_docker.sh
-   ```
-
-3. Construye la imagen Docker:
-   ```bash
-   ./run_docker.sh --build
-   ```
-   
-   Alternativamente, puedes construirla directamente con Docker:
-   ```bash
-   docker build -t whisper_diarizer .
-   ```
+La imagen ocupa unos 16 GB. La primera ejecución descarga además los modelos.
 
 ## Uso
 
-### Utilizando el script de ayuda
-
-El script `run_docker.sh` facilita la construcción y ejecución del contenedor:
-
 ```bash
-# Ver ayuda y opciones disponibles
-./run_docker.sh --help
-
-# Procesar un solo archivo
-./run_docker.sh --run --input ./mi_audio.mp3 --output ./resultados
-
-# Procesar un directorio completo
-./run_docker.sh --run --input ./mis_audios --output ./resultados
-
-# Especificar idioma y modelo
-./run_docker.sh --run --input ./mis_audios --output ./resultados --language es --model medium
-
-# Especificar número de hablantes (si lo conoces)
-./run_docker.sh --run --input ./mis_audios --output ./resultados --num-speakers 3
+git clone https://github.com/joan-bl/whisper_diarizer.git
+cd whisper_diarizer
+docker build -t whisper_diarizer .
 ```
 
-### Utilizando Docker directamente
-
-También puedes ejecutar el contenedor directamente con Docker:
+**Procesar todos los audios de una carpeta**, con los valores de `config.yaml`:
 
 ```bash
-# Procesar un archivo
 docker run --gpus all \
   -v "$(pwd)/mis_audios:/app/input" \
   -v "$(pwd)/resultados:/app/output" \
-  whisper_diarizer \
-  --input "/app/input/mi_audio.mp3" \
-  --output "/app/output" \
-  --language es \
-  --model_size large-v2
+  whisper_diarizer
+```
 
-# Procesar un directorio
+**Con opciones:**
+
+```bash
 docker run --gpus all \
   -v "$(pwd)/mis_audios:/app/input" \
   -v "$(pwd)/resultados:/app/output" \
-  whisper_diarizer \
-  --input "/app/input" \
-  --output "/app/output" \
-  --language es \
-  --model_size large-v2
+  whisper_diarizer --input /app/input/entrevista.mp3 -n 2 -l es -m medium
 ```
 
-## Configuración
+| Opción | Qué hace | Por defecto |
+|---|---|---|
+| `-i`, `--input` | Archivo o carpeta de audio | `input_folder` de `config.yaml` |
+| `-o`, `--output` | Carpeta de resultados | `output_folder` de `config.yaml` |
+| `-n`, `--num_speakers` | Número de hablantes | Estimación automática |
+| `-l`, `--language` | Idioma (`es`, `en`…; `any` para detección automática) | `language` de `config.yaml` |
+| `-m`, `--model_size` | `tiny`, `base`, `small`, `medium`, `large`, `large-v2` o `large-v3` | `model_size` de `config.yaml` |
+| `-c`, `--config` | Otro archivo de configuración | `config.yaml` |
 
-Puedes personalizar el comportamiento del sistema editando el archivo `config.yaml`:
+Las opciones de la línea de comandos tienen prioridad sobre `config.yaml`.
 
-```yaml
-# Modelo de Whisper a utilizar
-model_size: "large-v2"  # Opciones: tiny, base, small, medium, large, large-v2
+Para probarlo hay un audio de ejemplo en `input/VocesVarias.m4a`.
 
-# Idioma del audio
-language: "es"  # Opciones: es (español), en (inglés), auto (detección automática)
+## Sin Docker
 
-# Número de hablantes (null para estimación automática)
-num_speakers: null 
+Con Python 3.10, ffmpeg y PyTorch instalados:
 
-# Carpetas dentro del contenedor
-input_folder: "/app/input"
-output_folder: "/app/output"
+```bash
+pip install -r requirements.txt
+python whisper_diarizer_container.py -i input -o output -n 2
+```
 
-# Formatos de salida
-output_formats:
-  - txt
-  - json
-  - srt
+## Estructura
+
+```
+whisper_diarizer_container.py   # Script principal
+config.yaml                     # Configuración por defecto
+Dockerfile, requirements.txt
+input/                          # Audio de ejemplo
+docs/                           # Script original de Colab, plan de integración y notas de la imagen
 ```
 
 ## Solución de problemas
 
-### Verificar soporte de GPU
+- **Comprobar que Docker ve la GPU:** `docker run --gpus all nvidia/cuda:12.1.1-base-ubuntu22.04 nvidia-smi`
+- **`could not select device driver "" with capabilities: [[gpu]]`:** falta el NVIDIA Container Toolkit (ver el enlace de Requisitos).
+- **Falta memoria en la GPU:** usa un modelo más pequeño (`-m small` o `-m medium`).
 
-Para verificar que Docker pueda acceder a la GPU:
+## Licencias de terceros
 
-```bash
-docker run --gpus all nvidia/cuda:12.1.1-base-ubuntu22.04 nvidia-smi
-```
-
-Deberías ver información sobre tu GPU si está configurada correctamente.
-
-### Error "could not select device driver"
-
-Si ves un error como:
-```
-docker: Error response from daemon: could not select device driver "" with capabilities: [[gpu]].
-```
-
-Necesitas instalar NVIDIA Container Toolkit:
-
-```bash
-# Para Ubuntu/Debian
-distribution=$(. /etc/os-release;echo $ID$VERSION_ID)
-curl -s -L https://nvidia.github.io/nvidia-docker/gpgkey | sudo apt-key add -
-curl -s -L https://nvidia.github.io/nvidia-docker/$distribution/nvidia-docker.list | sudo tee /etc/apt/sources.list.d/nvidia-docker.list
-sudo apt-get update && sudo apt-get install -y nvidia-container-toolkit
-sudo systemctl restart docker
-```
-
-### Problemas con HuggingFace
-
-Si ves errores relacionados con la descarga de modelos de HuggingFace, puedes:
-
-1. Crear una cuenta en HuggingFace
-2. Generar un token de acceso en https://huggingface.co/settings/tokens
-3. Usar el token al ejecutar el contenedor:
-
-```bash
-docker run --gpus all \
-  -v "$(pwd)/mis_audios:/app/input" \
-  -v "$(pwd)/resultados:/app/output" \
-  -e HUGGINGFACE_TOKEN="tu_token_aquí" \
-  whisper_diarizer \
-  --input "/app/input" \
-  --output "/app/output"
-```
-
-## Notas adicionales
-
-- La primera ejecución puede ser lenta mientras se descargan los modelos
-- Los modelos más grandes (como "large-v2") ofrecen mejor precisión pero requieren más memoria GPU
-- Si tienes poca memoria GPU, usa modelos más pequeños como "base" o "small"
-
-## Licencia
-
-Este proyecto utiliza varias bibliotecas de código abierto:
-- [OpenAI Whisper](https://github.com/openai/whisper) - Licencia MIT
-- [PyAnnote Audio](https://github.com/pyannote/pyannote-audio) - Licencia MIT
-
-## Atribuciones
-
-Este proyecto fue adaptado del script original para Google Colab y mejorado para funcionar en contenedores Docker.
+[OpenAI Whisper](https://github.com/openai/whisper) (MIT), [pyannote.audio](https://github.com/pyannote/pyannote-audio) (MIT) y [SpeechBrain](https://github.com/speechbrain/speechbrain) (Apache 2.0).
