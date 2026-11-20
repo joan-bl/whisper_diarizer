@@ -1,0 +1,36 @@
+whisper_transcriber_diarizer/
+├── backend/
+│   ├── app/
+│   │   ├── __init__.py
+│   │   ├── api/
+│   │   │   ├── __init__.py
+│   │   │   ├── routes.py           # API endpoints
+│   │   │   └── models.py           # Pydantic models for request/response
+│   │   ├── core/
+│   │   │   ├── __init__.py
+│   │   │   ├── config.py           # Application configuration
+│   │   │   └── logging.py          # Logging setup
+│   │   └── services/
+│   │       ├── __init__.py
+│   │       └── transcription.py     # Transcription logic (formerly process_audio.py)
+│   ├── main.py                      # Application entry point
+│   ├── requirements.txt
+│   └── tests/                       # Unit tests
+│       ├── __init__.py
+│       ├── test_api.py
+│       └── test_transcription.py
+├── frontend/
+│   ├── src/
+│   │   ├── gui.py                   # Main GUI application
+│   │   ├── components/              # Reusable UI components
+│   │   │   ├── __init__.py
+│   │   │   └── widgets.py
+│   │   └── utils/                   # Frontend utilities
+│   │       ├── __init__.py
+│   │       └── api_client.py        # API communication logic
+│   └── requirements.txt
+├── docker/
+│   ├── Dockerfile.backend
+│   ├── Dockerfile.frontend
+│   └── docker-compose.yml
+└── README.md

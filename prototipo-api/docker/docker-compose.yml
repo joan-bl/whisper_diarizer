@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.backend
+    container_name: whisper-backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - ../backend:/app
+      - whisper_uploads:/app/uploads
+    restart: unless-stopped
+    environment:
+      - DEBUG_MODE=true
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # For development with GUI over X11 forwarding
+  # Note: This requires proper X11 setup on the host
+  frontend-dev:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.frontend
+    container_name: whisper-frontend
+    environment:
+      - DISPLAY=${DISPLAY}
+      - API_URL=http://backend:8000/api/v1
+    volumes:
+      - ../frontend:/app
+      - /tmp/.X11-unix:/tmp/.X11-unix
+    depends_on:
+      - backend
+
+volumes:
+  whisper_uploads:
+    driver: local

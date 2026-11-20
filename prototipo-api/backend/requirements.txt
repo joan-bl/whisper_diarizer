@@ -1,0 +1,18 @@
+# Web API
+fastapi>=0.104.0
+uvicorn>=0.23.2
+python-multipart>=0.0.6
+pydantic>=2.4.2
+pydantic-settings>=2.0.3
+
+# Processing
+numpy>=1.25.2
+# Uncomment for full version:
+# openai-whisper>=20231117
+# ffmpeg-python>=0.2.0
+# torch>=2.1.0
+
+# Utilities
+python-dotenv>=1.0.0
+pytest>=7.4.2
+httpx>=0.25.0

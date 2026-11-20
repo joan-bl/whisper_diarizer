@@ -1,5 +1,7 @@
 .git
 output/
 docs/
+notebooks/
+prototipo-api/
 __pycache__/
 *.pyc

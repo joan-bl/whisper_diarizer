@@ -70,12 +70,24 @@ python whisper_diarizer_container.py -i input -o output -n 2
 ## Estructura
 
 ```
-whisper_diarizer_container.py   # Script principal
+whisper_diarizer_container.py   # Script principal (lo que ejecuta Docker)
 config.yaml                     # Configuración por defecto
 Dockerfile, requirements.txt
 input/                          # Audio de ejemplo
-docs/                           # Script original de Colab, plan de integración y notas de la imagen
+notebooks/                      # Versiones anteriores en Google Colab (ver "Historia")
+prototipo-api/                  # Siguiente fase, sin terminar: API (FastAPI) + interfaz gráfica
+docs/                           # Plan de integración, notas de la imagen Docker, diccionario técnico
 ```
+
+## Historia del proyecto
+
+El proyecto empezó en Google Colab y fue creciendo por fases:
+
+1. **`notebooks/01_diarizer_primitivo.ipynb`**: copia de un notebook público de Colab ("transcripts with speaker names") que combina Whisper con huellas de voz de SpeechBrain.
+2. **`notebooks/02_diarizer_funcional.ipynb`**: se adapta para que acepte audio estéreo (antes esperaba un solo canal) y se convierte siempre el audio a WAV estándar.
+3. **`notebooks/03_whisper_diarizer_final.ipynb`**: versión ordenada, con instalación automática de dependencias y limpieza de la carpeta de Colab. `docs/whisper_diarizer_colab_original.py` es este mismo notebook exportado a Python.
+4. **Docker** (la raíz del repositorio): el código pasa a un script que se ejecuta en un contenedor con GPU.
+5. **`prototipo-api/`** (sin terminar): separar el programa en un servidor con API y una ventana de escritorio que le envía los audios. Ver su [README](prototipo-api/README.md).
 
 ## Solución de problemas
 
